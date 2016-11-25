@@ -1,0 +1,20 @@
+{
+  "name": "public",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "react-scripts": "0.7.0"
+  },
+  "dependencies": {
+    "react": "^15.4.0",
+    "react-cookie": "^0.4.8",
+    "react-dom": "^15.4.0"
+  },
+  "homepage": "http://localhost:9000/private",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
