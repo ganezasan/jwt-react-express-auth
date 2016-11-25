@@ -4,17 +4,15 @@ const morgan = require('morgan');
 const path = require('path');
 const session = require('express-session');
 const passport = require('passport');
-const DynamoDBStore = require('connect-dynamodb')({session: session});
 const LocalStrategy = require('passport-local').Strategy;
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-
 
 var db={
   users:{
     records:[{
       id:"1",
       username:"user",
+      email: "joe@example.com",
       password:"password",
       name:"Hibohiboo"
     }],
@@ -29,11 +27,11 @@ var db={
         }
       });
     },
-    findByUsername(username, cb){
+    findByEmail(email, cb){
       process.nextTick(()=> {
         for (var i = 0, len = this.records.length; i < len; i++) {
           var record = this.records[i];
-          if (record.username === username) {
+          if (record.email === email) {
             return cb(null, record);
           }
         }
@@ -44,9 +42,11 @@ var db={
 };
 
 
-passport.use(new LocalStrategy(
-  function(username, password, cb) {
-    db.users.findByUsername(username, function(err, user) {
+passport.use(new LocalStrategy({
+    usernameField: 'email',
+  },
+  function(email, password, cb) {
+    db.users.findByEmail(email, function(err, user) {
       if (err) { return cb(err); }
       if (!user) { return cb(null, false); }
       if (user.password != password) { return cb(null, false); }
@@ -69,23 +69,10 @@ passport.deserializeUser(function(id, cb) {
 
 const app = express();
 
-const dynamoDBoptions = {
-  table: 'startupdb-sessions',
-  AWSConfigPath: './credentials.json',
-  AWSConfigJSON: {
-    region: 'ap-northeast-1',
-    correctClockSkew: true
-  },
-  // Defaults to 600000 (10 minutes).
-  reapInterval: 600000
-};
-
-app.use(cookieParser());
 app.use(bodyParser.json());
 
 // session
 app.use(session({
-  store: new DynamoDBStore(dynamoDBoptions),
   secret: 'passport-example-app',
   saveUninitialized: true,
   resave: true,
@@ -140,15 +127,25 @@ app.get('/sample',
     next();
   });
 
-app.post('/sign-in',
-  passport.authenticate('local', {
-    failureRedirect: '/sign-in'
-  }),
-  function(req, res) {
-    res.redirect('/private');
-  });
+app.post('/sign-in', function(req, res, next) {
+  passport.authenticate('local', function(err, user) {
+    if (err) {
+      return next(err); // will generate a 500 error
+    }
+    if (! user) {
+      return res.send({ success : false, message : 'authentication failed' });
+    }
 
-app.get('*', (req, res, next) => {
+    req.login(user, loginErr => {
+      if (loginErr) {
+        return next(loginErr);
+      }
+      return res.send({ success : true, message : 'authentication succeeded', redirect: '/private' });
+    });
+  })(req, res, next);
+});
+
+app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '..', 'public-client', 'build', 'index.html'));
 });
 
