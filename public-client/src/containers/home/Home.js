@@ -6,6 +6,10 @@ function Home() {
       <div className="App-header">
         <h2>Home</h2>
       </div>
+      <ul style={{listStyleType: 'none', padding: 0}}>
+        <li><a href={'/sign-in'}>SignIn</a></li>
+        <li><a href={'/private'}>Private Page</a></li>
+      </ul>
     </div>
   );
 }
