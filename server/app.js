@@ -6,41 +6,7 @@ const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bodyParser = require('body-parser');
-
-var db={
-  users:{
-    records:[{
-      id:"1",
-      username:"user",
-      email: "joe@example.com",
-      password:"password",
-      name:"Hibohiboo"
-    }],
-    findById(id, cb) {
-      process.nextTick(() => {
-        var idx = id - 1;
-        var record=this.records[idx];
-        if (record) {
-          cb(null, record);
-        } else {
-          cb(new Error('User ' + id + ' does not exist'));
-        }
-      });
-    },
-    findByEmail(email, cb){
-      process.nextTick(()=> {
-        for (var i = 0, len = this.records.length; i < len; i++) {
-          var record = this.records[i];
-          if (record.email === email) {
-            return cb(null, record);
-          }
-        }
-        return cb(null, null);
-      });
-    }
-  }
-};
-
+const db = require('./mockDB');
 
 passport.use(new LocalStrategy({
     usernameField: 'email',
@@ -143,6 +109,11 @@ app.post('/sign-in', function(req, res, next) {
       return res.send({ success : true, message : 'authentication succeeded', redirect: '/private' });
     });
   })(req, res, next);
+});
+
+app.post('/logout', function(req, res) {
+  req.logout();
+  return res.send({ success : true, message : 'logout succeeded', redirect: '/sign-in' });
 });
 
 app.get('*', (req, res) => {
