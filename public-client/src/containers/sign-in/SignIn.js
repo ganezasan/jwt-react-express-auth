@@ -13,24 +13,21 @@ class SignIn extends Component {
     event.preventDefault();
 
     const email = this.refs.email.value;
-    const pass = this.refs.pass.value;
-    const formData = new FormData();
-    formData.append('username',this.refs.email.value);
-    formData.append('password',this.refs.pass.value);
+    const password = this.refs.password.value;
 
-    fetch('/sign-in', {
+    fetch('/api/sign-in', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ "email": email, "password": pass }),
+      body: JSON.stringify({ email, password }),
     })
     .then((res) => res.json())
     .then((res) => {
-      // this.props.router.replaceWith('/private');
       if(res.success) {
+        localStorage.setItem('jwt', res.token);
         document.location.href = res.redirect;
       }
       this.setState({
@@ -57,7 +54,7 @@ class SignIn extends Component {
         </div>
         <form onSubmit={this.handleSubmit}>
           <label><input ref="email" placeholder="email" defaultValue="joe@example.com" /></label>
-          <label><input ref="pass" placeholder="password" /></label> (hint: password)<br />
+          <label><input ref="password" placeholder="password" /></label> (hint: password)<br />
           <button type="submit">login</button>
         </form>
       </div>
