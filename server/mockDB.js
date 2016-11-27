@@ -1,11 +1,21 @@
+const records = [
+  {
+    id:"1",
+    name:"Hibohiboo",
+    email: "joe@example.com",
+    password:"password",
+  },
+  {
+    id:"2",
+    name:"user2",
+    email: "users@example.com",
+    password:"password",
+  }
+];
+
 const mockDB = {
   users: {
-    records:[{
-      id:"1",
-      name:"Hibohiboo",
-      email: "joe@example.com",
-      password:"password",
-    }],
+    records,
     findById(id, cb) {
       process.nextTick(() => {
         var idx = id - 1;
