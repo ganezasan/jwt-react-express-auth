@@ -1,44 +1,74 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import React, { PropTypes, Component } from 'react';
+import { connect } from 'react-redux';
+import { BrowserRouter, Match } from 'react-router';
+import {
+  Private,
+  InitialLoading
+} from './containers';
+import { fetchLoginState } from './redux/auth/actions/auth';
 import './App.css';
-import fetch from 'isomorphic-fetch';
 
 class App extends Component {
+  state = {
+    height: document.documentElement.clientHeight,
+  };
 
-  handleLogout() {
-    fetch('/logout', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: {},
-    })
-    .then((res) => res.json())
-    .then((res) => {
-      if(res.success) {
-        document.location.href = res.redirect;
-      }
-    }).catch((err) => {
-      console.error('Fetch logout ERROR:', err);
+  componentDidMount() {
+    window.addEventListener('resize', this.handleResize);
+  }
+
+  componentWillMount() {
+    this.props.dispatch(fetchLoginState());
+  }
+
+  componentWillUpdate(nextProps) {
+    const { auth } = nextProps;
+    this.guestWillTransfer(auth);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  }
+
+  guestWillTransfer(auth) {
+    const { pathname } = document.location;
+
+    if (!auth.isLoggedIn && pathname !== '/sign-in') {
+      setTimeout(function() {
+        document.location.href = '/sign-in';
+      }, 2000);
+    }
+  }
+
+  handleResize = this.handleResize.bind(this);
+  handleResize() {
+    this.setState({
+      height: document.documentElement.clientHeight,
     });
   }
 
   render() {
-    return (
-      <div className="App">
-        <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Private Client</h2>
-        </div>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
-        <button onClick={this.handleLogout}>Logout</button>
-      </div>
-    );
+    const { auth } = this.props;
+    const { height } = this.state;
+
+    return auth.isLoggedIn ? (
+      <BrowserRouter>
+        {(router) => (
+          <div>
+            <Match exactly pattern="/private" component={() => <Private />} />
+          </div>
+        )}
+      </BrowserRouter> ) : <InitialLoading height={height} />;
   }
 }
 
-export default App;
+App.propTypes = {
+  dispatch: PropTypes.func.isRequired,
+  auth: PropTypes.object.isRequired
+};
+
+function select({ auth }) {
+  return { auth };
+}
+
+export default connect(select)(App);
